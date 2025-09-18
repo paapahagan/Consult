@@ -11,7 +11,7 @@ export default function Footer() {
     setEmail("");
   };
   return (
-    <footer className="mt-auto bg-slate-500 text-white">
+    <footer className="mt-auto bg-slate-900 text-white">
       <div className="footer container mx-auto w-ful p-10 bg-base-200 text-base-content flex justify-between">
         <div className="space-y-6">
           <h3 className="text-xl font-semibold">Navigation</h3>

@@ -12,20 +12,84 @@ import { Button } from "./ui/button";
 import { Label } from "@radix-ui/react-label";
 import { Input } from "./ui/input";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function SignupForm() {
-  const [name, setName] = useState();
-  const [email, setEmail] = useState();
-  const [password, setPassword] = useState();
-  const [confirmPassword, setConfirmPassword] = useState();
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    ConfirmPassword: "",
+  });
+  const [error, setErrors] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const router = useRouter();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setErrors("");
+
+    // Client-side validation
+    if (formData.password !== formData.ConfirmPassword) {
+      setErrors("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:8000/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        //redirect to dashboard
+        router.push("/dashboard");
+      } else {
+        setErrors(data.message || "Registration failed");
+      }
+    } catch (error) {
+      console.log("Registration error:", error);
+      setErrors("An error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto h-screen">
-      <div className="flex h-full items-center justify-center">
+      <div
+        // onSubmit={handleSubmit}
+        className="flex h-full items-center justify-center"
+      >
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-xl">Welcome back</CardTitle>
+            <CardTitle className="text-xl">Welcome </CardTitle>
             <CardDescription>
-              Login with your Apple or Google account
+              Sign up with your details or Google account
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -33,22 +97,105 @@ export default function SignupForm() {
               <div className="grid gap-6">
                 <div className="grid gap-6">
                   <div className="grid gap-3">
+                    <Label htmlFor="email">First Name</Label>
+                    <Input
+                      id="FirstName"
+                      name="firstName"
+                      placeholder="Jon Doe"
+                      required
+                      value={formData.firstName}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="grid gap-3">
+                    <Label htmlFor="email">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      placeholder="Jon Doe"
+                      required
+                      value={formData.lastName}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="grid gap-3">
                     <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
-                      type="email"
+                      name="email"
                       placeholder="m@example.com"
                       required
+                      value={formData.email}
+                      onChange={handleChange}
                     />
                   </div>
                   <div className="grid gap-3">
                     <div className="flex items-center">
                       <Label htmlFor="password">Password</Label>
                     </div>
-                    <Input id="password" type="password" required />
+                    <Input
+                      name="password"
+                      type="password"
+                      required
+                      value={formData.password}
+                      onChange={handleChange}
+                    />
                   </div>
-                  <Button type="submit" className="w-full">
-                    Login
+                  <div className="grid gap-3">
+                    <div className="flex items-center">
+                      <Label htmlFor="password">Confirm Password</Label>
+                    </div>
+                    <Input
+                      type="password"
+                      name="ConfirmPassword"
+                      id="ConfirmPassword"
+                      required
+                      value={formData.ConfirmPassword}
+                      onChange={handleChange}
+                    />
+                    {formData.ConfirmPassword &&
+                      formData.password !== formData.ConfirmPassword && (
+                        <p className="mt-1 text-sm text-red-600">
+                          Passwords do not match
+                        </p>
+                      )}
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={
+                      isLoading ||
+                      formData.password !== formData.ConfirmPassword
+                    }
+                    className="w-full"
+                    onClick={handleSubmit}
+                  >
+                    {isLoading ? (
+                      <div className="flex items-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Creating account...
+                      </div>
+                    ) : (
+                      "Create account"
+                    )}
                   </Button>
                 </div>
 

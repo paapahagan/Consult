@@ -48,14 +48,17 @@ export const authController = {
       if (existUser) {
         return res.status(400).json({ msg: "User already exists" });
       }
+      //i'll explain this hashing with bcryptjs
+      // Hash password
+
       const saltRounds = 10;
       const hashedPassword = await bcryptjs.hash(password, saltRounds);
 
       // Create new user
       const newUser = await prisma.user.create({
         data: {
-          firstName: firstName || null,
-          lastName: lastName || null,
+          firstName: firstName,
+          lastName: lastName,
           email: email.toLowerCase(),
           password: hashedPassword,
         },
@@ -83,6 +86,7 @@ export const authController = {
       res.status(500).json({ success: false, msg: "Server error" });
     }
   }, // <-- Add this closing brace and comma to end the register method
+
   // Login function (enhanced)
   login: async (req, res) => {
     try {
@@ -132,8 +136,8 @@ export const authController = {
         user: {
           id: user.id,
           email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          // firstName: user.firstName,
+          // lastName: user.lastName,
         },
       });
     } catch (error) {
